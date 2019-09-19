@@ -9,3 +9,8 @@ services:
     volumes:
       - ./courses:/home/app/autolab/courses
       - ./db:/home/app/autolab/db
+  tango:
+    image: autolabproject/tango:latest
+  redis:
+    image: 'redis:latest'
+

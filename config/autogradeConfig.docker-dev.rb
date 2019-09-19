@@ -6,7 +6,7 @@
 RESTFUL_HOST = tango
 
 # Port for Tango RESTful API
-RESTFUL_PORT = 3000
+RESTFUL_PORT = 3001
 
 # How many seconds to wait for Tango RPC calls before timing out?
 AUTOCONFIG_TANGO_TIMEOUT = 15
