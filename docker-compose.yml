@@ -9,8 +9,14 @@ services:
     volumes:
       - ./courses:/home/app/autolab/courses
       - ./db:/home/app/autolab/db
+    depends_on:
+      - "tango"
   tango:
-    image: autolabproject/tango:latest
+    image: autolabproject/tango-dev:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - "redis"
   redis:
     image: 'redis:latest'
 
