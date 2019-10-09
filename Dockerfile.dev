@@ -14,8 +14,8 @@ ENV APP_PATH /home/app/autolab
 
 # Different layer for installation of gems
 WORKDIR $APP_PATH
-ADD Gemfile $APP_PATH
-ADD Gemfile.lock $APP_PATH
+COPY Gemfile $APP_PATH
+COPY Gemfile.lock $APP_PATH
 
 RUN bundle install --without production
 
@@ -28,7 +28,7 @@ COPY ./config/initializers/devise.docker-dev.rb $APP_PATH/config/initializers/de
 
 EXPOSE 3000
 
-RUN ["rails", "db:migrate"]
+RUN rails db:migrate
 
 # -b flag binds IP to 0.0.0.0 instead of localhost so it is accessible from outside
 CMD ["rails", "server", "-b", "0.0.0.0"]

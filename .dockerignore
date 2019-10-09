@@ -87,3 +87,7 @@ out.txt
 .vscode/
 .byebug_history
 .env
+
+# Dockerfile
+Dockerfile
+Dockerfile.dev
