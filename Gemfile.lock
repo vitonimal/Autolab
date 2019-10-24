@@ -142,7 +142,6 @@ GEM
     jstz-rails3-plus (1.0.5)
       railties (>= 3.1)
     jwt (2.1.0)
-    libv8 (6.7.288.46.1)
     loofah (2.2.3)
       crass (~> 1.0.2)
       nokogiri (>= 1.5.9)
@@ -159,8 +158,6 @@ GEM
     mimemagic (0.3.3)
     mini_mime (1.0.1)
     mini_portile2 (2.4.0)
-    mini_racer (0.2.4)
-      libv8 (>= 6.3)
     minitest (5.11.3)
     momentjs-rails (2.20.1)
       railties (>= 3.1)
@@ -362,7 +359,6 @@ DEPENDENCIES
   jquery-rails
   js_cookie_rails
   materialize-sass
-  mini_racer
   momentjs-rails (>= 2.9.0)
   mysql2 (~> 0.4.10)
   net-ldap
