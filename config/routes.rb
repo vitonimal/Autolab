@@ -105,7 +105,6 @@ Rails.application.routes.draw do
         member do
           get "destroyConfirm"
           get "download"
-          get "listArchive", as: :list_archive
           get "view"
         end
 
