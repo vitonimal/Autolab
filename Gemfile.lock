@@ -197,6 +197,9 @@ GEM
     parallel (1.17.0)
     parser (2.6.2.1)
       ast (~> 2.4.0)
+    passenger (6.0.4)
+      rack
+      rake (>= 0.8.1)
     pdf-reader (1.4.1)
       Ascii85 (~> 1.0.0)
       afm (~> 0.2.1)
@@ -371,6 +374,7 @@ DEPENDENCIES
   omniauth-facebook (>= 2.0.0)
   omniauth-google-oauth2 (>= 0.2.5)
   omniauth-shibboleth (>= 1.1.2)
+  passenger (>= 5.0.25)
   populator (>= 1.0.0)
   prawn (= 0.13.0)
   rack-attack
@@ -394,7 +398,7 @@ DEPENDENCIES
   yard
 
 RUBY VERSION
-   ruby 2.6.1p33
+   ruby 2.6.3p62
 
 BUNDLED WITH
    1.17.2

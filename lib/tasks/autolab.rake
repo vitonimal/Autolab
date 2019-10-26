@@ -18,9 +18,9 @@ end
 
 namespace :autolab do
   COURSE_NAME = "AutoPopulated"
-  USER_COUNT = 50
+  USER_COUNT = 10
   ASSESSMENT_CATEGORIES = ["Homework", "Lab", "Quiz"]
-  ASSESSMENT_COUNT = 6
+  ASSESSMENT_COUNT = 3
   PROBLEM_COUNT = 3 
   SUBMISSION_MAX = 3
   PROBLEM_MAX_SCORE = 100.0
@@ -39,6 +39,11 @@ namespace :autolab do
   AUTOGRADE_TEMPLATE_HANDIN_DIRECTORY = "handin"
   AUTOGRADE_TEMPLATE_HANDIN_FILENAME = "handin.py"
 
+  WANT_ANNOUNCEMENT = true
+  ANNOUNCEMENT_TITLE = "Scheduled Website and Database Refresh"
+  ANNOUNCEMENT_DESCRIPTION = "This is a demonstration website. It refreshes at 0,6,12,18 Hours (UTC) daily. Do not use this site to store important information."
+
+
   def load_course name
     Course.create do |c|
       c.name = name
@@ -52,6 +57,15 @@ namespace :autolab do
       c.end_date = COURSE_END
     end
   end
+
+  def add_announcement course
+	  course.announcements.create do |a|
+		  a.title = ANNOUNCEMENT_TITLE
+		  a.description = ANNOUNCEMENT_DESCRIPTION
+		  a.system = true
+		  a.persistent = true
+	  end
+  end 
 
   def load_assessments course
     course_dir = Rails.root.join("courses", course.name)
@@ -374,6 +388,11 @@ namespace :autolab do
 
     puts "Creating Autograde Assessment"
     load_autograde_assessment course
+    
+    if WANT_ANNOUNCEMENT
+    	puts "Creating Persistent Announcement"
+    	add_announcement course
+    end 
 
     course.reload_config_file
 

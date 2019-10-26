@@ -132,3 +132,5 @@ gem 'prawn', '0.13.0'
 gem 'net-ldap'
 
 gem 'sprockets-rails', '>=3.2.1'
+
+gem "passenger", ">= 5.0.25", require: "phusion_passenger/rack_handler"
