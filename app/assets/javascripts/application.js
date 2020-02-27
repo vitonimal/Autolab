@@ -18,6 +18,4 @@
 //= require materialize
 //= require materialize-sprockets
 //= require js.cookie
-//= require jstz
 //= require browser_timezone_rails/set_time_zone
-//= require turbolinks

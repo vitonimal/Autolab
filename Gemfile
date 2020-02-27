@@ -25,7 +25,7 @@ gem 'mini_racer',  platforms: :ruby
 gem 'jquery-rails'
 
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
-gem 'turbolinks', '~> 5.2.0'
+# gem 'turbolinks', '~> 5.2.0'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '>= 2.0'
@@ -131,6 +131,6 @@ gem 'prawn', '0.13.0'
 # LDAP Lookup
 gem 'net-ldap'
 
-gem 'sprockets-rails', '>=3.2.1'
+gem 'sprockets', '~>3.0'
 
 gem "passenger", ">= 5.0.25", require: "phusion_passenger/rack_handler"
