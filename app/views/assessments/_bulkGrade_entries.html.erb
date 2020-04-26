@@ -1,11 +1,13 @@
+<!-- Latest Sortable -->
+<script src="https://raw.githack.com/SortableJS/Sortable/master/Sortable.js"></script>
 <table id="entries">
-  <tr>
+  <tr id="tableHeaders" class="list-group">
     <th class="i">#</th>
-    <th class="email">Email</th>
+    <th class="email list-group-item">Email</th>
   <% problems.each do |problem| %>
-    <th><%= problem.name %></th>
+    <th class="list-group-item"><%= problem.name %></th>
   <% end %>
-    <th>Grade Type</th>
+    <th class="list-group-item">Grade Type</th>
   </tr>
 <% entries.each_with_index do |entry, i| %>
   <tr>
@@ -18,3 +20,4 @@
   </tr>
 <% end %>
 </table>
+<script>Sortable.create(tableHeaders, { /* options */ });</script>
