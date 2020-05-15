@@ -5,6 +5,8 @@ require "rubygems/package"
 require "statistics"
 require "yaml"
 require "utilities"
+require "tango_client"
+require "rufus-scheduler"
 
 class AssessmentsController < ApplicationController
   include ActiveSupport::Callbacks
@@ -451,11 +453,104 @@ class AssessmentsController < ApplicationController
     @autograded = @assessment.has_autograder?
   end
 
+ def get_running
+    # Get the complete lists of live and dead jobs from the server
+    running_jobs = []
+    waiting_jobs = []
+    begin
+      raw_live_jobs = TangoClient.jobs
+    rescue TangoClient::TangoException => e
+      flash[:error] = "Error while getting job list: #{e.message}"
+    end
+
+    # Build formatted lists of the running, waiting
+    unless raw_live_jobs.nil?
+      raw_live_jobs.each do |rjob|
+        if rjob["assigned"] == true
+          running_jobs << formatRawJob(rjob)
+        else
+          waiting_jobs << formatRawJob(rjob)
+        end
+      end
+    end    
+     return running_jobs, waiting_jobs
+  end
+
+  # formatRawJob - Given a raw job from the server, creates a job
+  # hash for the view.
+  def formatRawJob(rjob)
+    job = {}
+    job[:rjob] = rjob
+    job[:id] = rjob["id"]
+    job[:name] = rjob["name"]
+
+    if rjob["notifyURL"]
+      uri = URI(rjob["notifyURL"])
+      path_parts = uri.path.split("/")
+      job[:course] = path_parts[2]
+      job[:assessment] = path_parts[4]
+    end
+
+    # Determine whether to expose the job name.
+    unless @cud.user.administrator?
+      if !@cud.instructor?
+        # Students can see only their own job names
+        job[:name] = "*" unless job[:name].ends_with? "_#{@cud.user.email}"
+      else
+        # Instructors can see only their course's job names
+        job[:name] = "*" if !rjob["notifyURL"] || !(job[:course].eql? @cud.course.id.to_s)
+      end
+    end
+
+    # Extract timestamps of first and last trace records
+    if rjob["trace"]
+      job[:first] = rjob["trace"][0].split("|")[0]
+      job[:last] = rjob["trace"][-1].split("|")[0]
+
+      # Compute elapsed time
+      t1 = DateTime.parse(job[:first]).to_time
+      snow = Time.now.in_time_zone.to_s
+      t2 = DateTime.parse(snow).to_time
+
+      job[:elapsed] = t2.to_i - t1.to_i # elapsed seconds
+      job[:tlast] = t2.to_i             # epoch time when the job completed
+
+      # Get status and overall summary of the job's state
+      job[:status] = rjob["trace"][-1].split("|")[1]
+    end
+
+    if job[:status]["Added job"]
+      job[:state] = "Waiting"
+    else
+      job[:state] = "Running"
+    end
+    
+    job
+  end
+
+  def time_elapsed
+    s = Rufus::Scheduler.singleton
+    s.every '5s' do
+      @Time_now = Time.now
+      @running_jobs, @waiting_jobs = get_running
+      puts "Running jobs: #{@running_jobs}"
+      puts "Waiting jobs: #{@waiting_jobs}"
+      puts "Time: #{@Time_now}"
+
+      # Call speak from the method defined above, if one is not empty
+      if @running_jobs != [] or @waiting_jobs != []
+        AssessmentChannel.speak(@running_jobs, @waiting_jobs)
+      end
+    end
+  end
+
   action_auth_level :history, :student
   def history
     # Remember the student ID in case the user wants visit the gradesheet
     session["gradeUser#{@assessment.id}"] = params[:cud_id] if params[:cud_id]
-
+   
+    @jobs_queues = JobsQueue.all
+    #time_elapsed
     @startTime = Time.now
     if @cud.instructor? && params[:cud_id]
       @effectiveCud = @course.course_user_data.find(params[:cud_id])
