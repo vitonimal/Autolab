@@ -550,7 +550,7 @@ class AssessmentsController < ApplicationController
     session["gradeUser#{@assessment.id}"] = params[:cud_id] if params[:cud_id]
    
     @jobs_queues = JobsQueue.all
-    #time_elapsed
+    time_elapsed
     @startTime = Time.now
     if @cud.instructor? && params[:cud_id]
       @effectiveCud = @course.course_user_data.find(params[:cud_id])
