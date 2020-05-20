@@ -635,6 +635,26 @@ private
       end
     end
   end
+  
+  # I'll temporarily write a new method for converting roster using roster_csv_map
+  # will decide later how to adjust the overall code structure
+  def detectAndConvertRosterWithMap(roster)
+    parsedRoster = CSV.parse(roster)
+    if parsedRoster[0][0].nil?
+      fail "Roster cannot be recognized"
+    end
+    
+    # try to find the roster_csv_map corresponding to the current course
+    rcm = RosterCsvMap.find_by(:name => "#{@course.name} Roster Map")
+    if rcm.nil?
+      # create a new map
+      rcm = RosterCsvMap.create(@course.name)
+    end
+
+    rcm.assignMapping(parsedRoster[0])
+
+    # use rcm to construct the converted roster
+  end
 
   # detectAndConvertRoster - Detect the type of a roster based on roster
   # column matching and convert to default roster
