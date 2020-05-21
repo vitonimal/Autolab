@@ -583,6 +583,7 @@ private
 
     begin
       csv = detectAndConvertRoster(params["upload"]["file"].read)
+      # csv = detectAndConvertRosterWithMap(params["upload"]["file"].read)
       csv.each do |row|
         next if row[1].nil? || row[1].chomp.size == 0
         newCUD = { email: row[1].to_s,
@@ -636,8 +637,11 @@ private
     end
   end
   
-  # I'll temporarily write a new method for converting roster using roster_csv_map
-  # will decide later how to adjust the overall code structure
+  # temporary new method for converting roster using roster_csv_map
+  # does this mean we don't have to consider the possible 16/15 columns
+  # mapping in the original method?
+  # also, it almost always seems that the course number column is not
+  # included at all
   def detectAndConvertRosterWithMap(roster)
     parsedRoster = CSV.parse(roster)
     if parsedRoster[0][0].nil?
@@ -645,7 +649,7 @@ private
     end
     
     # try to find the roster_csv_map corresponding to the current course
-    rcm = RosterCsvMap.find_by(:name => "#{@course.name} Roster Map")
+    rcm = RosterCsvMap.find_by(:name => @course.name)
     if rcm.nil?
       # create a new map
       rcm = RosterCsvMap.create(@course.name)
@@ -653,7 +657,43 @@ private
 
     rcm.assignMapping(parsedRoster[0])
 
-    # use rcm to construct the converted roster
+    # Since we are using the sortable table now, the first row is guaranteed to contain
+    # header information
+    numRows = parsedRoster.length - 1
+    convertedRoster = Array.new(numRows) { Array.new(11) }
+
+    if (Rails.env == "production")
+       domain="andrew.cmu.edu"
+    else
+       domain="foo.bar"
+    end
+
+    for i in 0..(numRows - 1)
+      # Semester(0)
+      convertedRoster[i][0] = parsedRoster[i+1][rcm.semestercol] if rcm.semestercol >= 0
+      # Email(1)
+      convertedRoster[i][1] = parsedRoster[i+1][rcm.emailcol] + "@" + domain if rcm.emailcol >= 0
+      # Last Name(2)
+      convertedRoster[i][2] = parsedRoster[i+1][rcm.lastnamecol] if rcm.lastnamecol >= 0
+      # First Name(3)
+      convertedRoster[i][3] = parsedRoster[i+1][rcm.firstnamecol] if rcm.firstnamecol >= 0
+      # School(4)
+      convertedRoster[i][4] = parsedRoster[i+1][rcm.schoolcol] if rcm.schoolcol >= 0
+      # Major(5)
+      convertedRoster[i][5] = parsedRoster[i+1][rcm.majorcol] if rcm.majorcol >= 0
+      # Year(6)
+      convertedRoster[i][6] = parsedRoster[i+1][rcm.yearcol] if rcm.yearcol >= 0
+      # Grade Policy(7)
+      convertedRoster[i][7] = parsedRoster[i+1][rcm.gradingpolicycol] if rcm.gradingpolicycol >= 0
+      # Course Number(8)
+      convertedRoster[i][8] = parsedRoster[i+1][rcm.coursenumbercol] if rcm.coursenumbercol >=0
+      # Lecture(9)
+      convertedRoster[i][9] = parsedRoster[i+1][rcm.courselecturecol] if rcm.courselecturecol >= 0
+      # Section(10)
+      convertedRoster[i][10] = parsedRoster[i+1][rcm.sectioncol] if rcm.sectioncol >= 0
+    end
+
+    return convertedRoster
   end
 
   # detectAndConvertRoster - Detect the type of a roster based on roster

@@ -2,9 +2,9 @@ class RosterCsvMap < ApplicationRecord
   self.table_name = "roster_csv_map"
   
   def self.new_default(courseName)
-  	newMap = RosterCsvMap.new()
+  	newMap = RosterCsvMap.new
 
-  	newMap.name = "#{courseName} Roster Map"
+  	newMap.name = courseName
 
     newMap.semestercol = -1
     newMap.emailcol = -1
@@ -25,7 +25,7 @@ class RosterCsvMap < ApplicationRecord
   	return newMap
   end
   
-  # firstRow contains mapping info
+  # colMap is the first row of the sortable table
   def assignMapping(colMap)
     mapl = colMap.length
     
