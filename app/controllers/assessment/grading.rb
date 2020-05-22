@@ -12,6 +12,46 @@ module AssessmentGrading
     file_name = "#{@course.name}_#{@assessment.name}_#{timestamp}.csv"
     send_data csv, filename: file_name
   end
+  
+  # the new parsing method will probably be completely different from what we had
+  # before; will write a new method to avoid messing up the original code structure
+  def bulkGradeWithMap
+  	# the actual data from sortable table should probably be different from
+  	# the current file reading but will copy the file reading procedure
+  	# as a placeholder for now
+  	return unless request.post?
+
+    # part 1: submitting a CSV for processing and returning errors in CSV
+    if params[:upload]
+      # get data type
+      @data_type = params[:upload][:data_type].to_sym
+      unless @data_type == :scores || @data_type == :feedback
+        flash[:error] = "bulkGrade: invalid data_type received from client"
+        redirect_to(action: :bulkGrade) && return
+      end
+
+      # get CSV
+      csv_file = params[:upload][:file]
+      if csv_file
+        @csv = csv_file.read
+      else
+        flash[:error] = "You need to choose a CSV file to upload."
+        redirect_to(action: :bulkGrade) && return
+      end
+
+      # next, since the sortable table always has the first row being
+      # the mapping info
+      gcm = GradeCsvMap.find_by(:name => "#{asmt.course.name} #{asmt.name}")
+      if gcm.nil?
+      	gcm = GradeCsvMap.create(asmt)
+      end
+
+      gcm.assignMap(csv[0], asmt)
+
+      # TODO
+      # generate rows according to the map
+    end
+  end
 
   # Allows the user to upload multiple scores or comments from a CSV file
   def bulkGrade
