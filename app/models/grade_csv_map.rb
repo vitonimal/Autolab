@@ -2,7 +2,9 @@ class GradeCsvMap < ApplicationRecord
   self.table_name = "grade_csv_map"
   has_many :grade_csv_problems, foreign_key: 'grade_map_id', dependent: :destroy
   # need to verify each column has a valid mapping, i.e. not -1
-  after_update :verify_full_mapping
+  # will write another verification once after confirming what is mandatory for
+  # bulk import
+  after_update :verify_email_and_grade_type
   
 
   def self.create(asmt)
@@ -37,14 +39,16 @@ class GradeCsvMap < ApplicationRecord
       gcps = self.grade_csv_problems
 
       for i in 0..(mapl-1)
-        case colMap[i]
+        case header[i]
         when "Email"
           self.emailcol = i
         when "Grade Type"
           self.typecol = i
         else
           problems.each do |problem|
-            if problem.name.equal?(colMap[i])
+          	# note that header takes on the form "problem Score/Feedback"
+          	# TODO: check whether there is escape character at the end
+            if problem.name.equal?(header[i])
               gcp = gcps.find_by(:problem_id => problem.id)
               gcp.grade = i
               gcp.save
@@ -60,12 +64,11 @@ class GradeCsvMap < ApplicationRecord
 
 private
   
-  def verify_full_mapping
-    if self.emailcol >= 0 && self.typecol >= 0 &&
-       self.problems.inject { |prev_valid, problem| prev_valid && problem.grade >= 0 }
+  def verify_email_and_grade_type
+    if self.emailcol >= 0 && self.typecol >= 0
       # do nothing
     else
-      raise "Invalid mapping updates for #{self.name}"
+      fail "Invalid mapping updates for #{self.name}"
     end
   end
 end

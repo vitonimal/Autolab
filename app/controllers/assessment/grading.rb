@@ -12,46 +12,6 @@ module AssessmentGrading
     file_name = "#{@course.name}_#{@assessment.name}_#{timestamp}.csv"
     send_data csv, filename: file_name
   end
-  
-  # the new parsing method will probably be completely different from what we had
-  # before; will write a new method to avoid messing up the original code structure
-  def bulkGradeWithMap
-  	# the actual data from sortable table should probably be different from
-  	# the current file reading but will copy the file reading procedure
-  	# as a placeholder for now
-  	return unless request.post?
-
-    # part 1: submitting a CSV for processing and returning errors in CSV
-    if params[:upload]
-      # get data type
-      @data_type = params[:upload][:data_type].to_sym
-      unless @data_type == :scores || @data_type == :feedback
-        flash[:error] = "bulkGrade: invalid data_type received from client"
-        redirect_to(action: :bulkGrade) && return
-      end
-
-      # get CSV
-      csv_file = params[:upload][:file]
-      if csv_file
-        @csv = csv_file.read
-      else
-        flash[:error] = "You need to choose a CSV file to upload."
-        redirect_to(action: :bulkGrade) && return
-      end
-
-      # next, since the sortable table always has the first row being
-      # the mapping info
-      gcm = GradeCsvMap.find_by(:name => "#{asmt.course.name} #{asmt.name}")
-      if gcm.nil?
-      	gcm = GradeCsvMap.create(asmt)
-      end
-
-      gcm.assignMap(csv[0], asmt)
-
-      # TODO
-      # generate rows according to the map
-    end
-  end
 
   # Allows the user to upload multiple scores or comments from a CSV file
   def bulkGrade
@@ -188,6 +148,36 @@ private
       false
     end
   end
+  
+  # WITH MAP
+  def parse_csv_with_map(csv, data_type)
+    # find map according to name
+    gcm = GradeCsvMap.find_by(:name => "#{@assessment.course.name} #{@assessment.name}")
+    if gcm.nil?
+      gcm = GradeCsvMap.create(@assessment)
+    end
+
+    gcm.assignMap(csv[0], @assessment)
+    
+    # generate rows according to the map
+    # same code block from original parse_csv
+    problems = @assessment.problems
+    emails = Set.new(CourseUserDatum.joins(:user).where(course: @assessment.course).map &:email)
+
+    # process CSV
+    entries = []
+    begin
+      CSV.parse(csv, skip_blanks: true) do |row|
+        entries << parse_csv_row_with_map(row, data_type, problems, emails, gcm)
+      end
+    rescue CSV::MalformedCSVError => e
+      flash[:error] = "Failed to parse CSV -- make sure the grades " \
+                      "are formatted correctly: <pre>#{e}</pre>"
+      return false, []
+    end
+
+    [true, entries]
+  end
 
   def parse_csv(csv, data_type)
     # inputs for parse_csv_row
@@ -207,6 +197,77 @@ private
     end
 
     [true, entries]
+  end
+  
+  # WITH MAP
+  def parse_csv_row_with_map(row, kind, problems, emails, map)
+    row = row.dup
+
+    email = row[map.emailcol]
+    grade_type = row[map.typecol]
+    row[map.emailcol] = :info_extracted
+    row[map.typecol] = :info_extracted
+
+    # gather data
+    problem_maps = map.grade_csv_problems
+    data = []
+    problems.each do |problem|
+      problem_map = problem_maps.find_by(:id => problem.id)
+      if problem_map.grade >= 0
+        data << row[problem_map.grade]
+        row[problem_map.grade] = :info_extracted
+      else
+        data << nil
+      end
+    end
+
+    row.select! { |value| value != :info_extracted }
+    # to be returned
+    processed = {}
+    processed[:extra_cells] = row if row.length > 0 # currently unused
+
+    # Checking that emails are valid
+    processed[:email] = if email.blank?
+                          { error: nil }
+                        elsif emails.include? email
+                          email
+                        else
+                          { error: email }
+                        end
+
+    # data
+    data.map! do |datum|
+      if datum.blank?
+        nil
+      else
+        case kind
+        when :scores
+          Float(datum) rescue({ error: datum })
+        when :feedback
+          datum
+        end
+      end
+    end
+    
+    # honestly I don't really understand what this is for
+    # all the preconditions leading up to this point convinces me that
+    # data is of the same length as problems
+    # I'll leave it here until confirmed
+    # pad data with nil until there are problems.count elements
+    data.fill nil, data.length, problems.count - data.length
+
+    problems.each_with_index { |problem, i| processed[:data][problem.name] = data[i] }
+
+    # grade type
+    processed[:grade_type] = if grade_type.blank?
+                               nil
+                             elsif AssessmentUserDatum::GRADE_TYPE_MAP.key? grade_type.to_sym
+                               grade_type.to_sym
+                             else
+                               { error: grade_type }
+    end
+
+    processed
   end
 
   def parse_csv_row(row, kind, problems, emails)
