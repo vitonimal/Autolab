@@ -41,6 +41,7 @@ class Assessment < ApplicationRecord
   after_save :invalidate_course_cgdubs, if: :due_at_changed?
   after_save :invalidate_course_cgdubs, if: :max_grace_days_changed?
   after_create :create_AUDs_modulo_callbacks
+  after_update :invalidate_grade_csv_mapping, if: :problems_changed? 
 
   # Constants
   ORDERING = "due_at ASC, name ASC"
@@ -367,6 +368,12 @@ private
 
   def invalidate_course_cgdubs
     course.invalidate_cgdubs
+  end
+
+  def invalidate_grade_csv_mapping
+    gcm = GradeCsvMap.find_by(:name => "#{self.course.name} #{self.name}")
+
+    gcm.destroy unless gcm.nil?
   end
 
   def config!

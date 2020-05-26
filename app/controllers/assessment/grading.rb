@@ -36,7 +36,8 @@ module AssessmentGrading
       end
 
       # process CSV
-      success, entries = parse_csv @csv, @data_type
+      # success, entries = parse_csv @csv, @data_type
+      success, entries = parse_csv_with_map @csv, @data_type
       if success
         @entries = entries
         @valid_entries = valid_entries? entries
@@ -58,7 +59,8 @@ module AssessmentGrading
       redirect_to(action: :bulkGrade) && return
     end
 
-    success, @entries = parse_csv csv, data_type
+    # success, @entries = parse_csv csv, data_type
+    success, @entries = parse_csv_with_map csv, data_type
     if !success
       flash[:error] = "bulkGrade_complete: invalid csv returned from client"
       redirect_to(action: :bulkGrade) && return

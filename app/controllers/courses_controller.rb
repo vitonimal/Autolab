@@ -582,8 +582,8 @@ private
     @newCUDs = []
 
     begin
-      csv = detectAndConvertRoster(params["upload"]["file"].read)
-      # csv = detectAndConvertRosterWithMap(params["upload"]["file"].read)
+      # csv = detectAndConvertRoster(params["upload"]["file"].read)
+      csv = detectAndConvertRosterWithMap(params["upload"]["file"].read)
       csv.each do |row|
         next if row[1].nil? || row[1].chomp.size == 0
         newCUD = { email: row[1].to_s,

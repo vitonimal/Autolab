@@ -1,5 +1,7 @@
 class RosterCsvMap < ApplicationRecord
   self.table_name = "roster_csv_map"
+
+  after_update :verify_full_mapping
   
   def self.new_default(courseName)
   	newMap = RosterCsvMap.new
@@ -25,9 +27,9 @@ class RosterCsvMap < ApplicationRecord
   	return newMap
   end
   
-  # colMap is the first row of the sortable table
-  def assignMapping(colMap)
-    mapl = colMap.length
+  # header is the first row of the sortable table
+  def assignMapping(header)
+    headerl = header.length
     
     RosterCsvMap.transaction do
       # acquire lock on current map
@@ -35,8 +37,8 @@ class RosterCsvMap < ApplicationRecord
       # will remove this lock if it turns out unnecessary
       reload(lock: true)
 
-      for i in 0..(mapl-1)
-        case colMap[i]
+      for i in 0..(headerl-1)
+        case header[i]
         when "EMAIL"
           self.emailcol = i
         when "FIRST_NAME"
@@ -64,6 +66,19 @@ class RosterCsvMap < ApplicationRecord
 
       save!
     end # release lock
+  end
+
+private
+  
+  def verify_full_mapping
+    if self.semestercol < 0 || self.emailcol < 0 ||
+       self.lastnamecol < 0 || self.firstnamecol < 0 ||
+       self.schoolcol < 0 || self.majorcol < 0 ||
+       self.yearcol < 0 || self.gradingpolicycol < 0 ||
+       self.coursenumbercol < 0 || self.courselecturecol < 0 ||
+       self.sectioncol < 0
+      fail "Invalid mapping updates for #{self.name}"
+    end
   end
 
 end

@@ -4,8 +4,7 @@ class GradeCsvMap < ApplicationRecord
   # need to verify each column has a valid mapping, i.e. not -1
   # will write another verification once after confirming what is mandatory for
   # bulk import
-  after_update :verify_email_and_grade_type
-  
+  after_update :verify_full_mapping
 
   def self.create(asmt)
   	newMap = GradeCsvMap.new
@@ -64,8 +63,9 @@ class GradeCsvMap < ApplicationRecord
 
 private
   
-  def verify_email_and_grade_type
-    if self.emailcol >= 0 && self.typecol >= 0
+  def verify_full_mapping
+    if self.emailcol >= 0 && self.typecol >= 0 &&
+       self.grade_csv_problems.inject { |prev_valid, cur_map| prev_valid && cur_map.grade >= 0 }
       # do nothing
     else
       fail "Invalid mapping updates for #{self.name}"
