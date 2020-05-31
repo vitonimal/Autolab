@@ -3,6 +3,8 @@ ruby '2.6.3'
 
 gem 'rails', '=5.2.0'
 
+gem 'tzinfo-data'
+
 # Use SCSS for stylesheets
 gem 'sass-rails', '>= 4.0.3'
 
