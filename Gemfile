@@ -4,6 +4,9 @@ ruby '2.6.3'
 gem 'rails', '=5.2.0'
 
 gem 'tzinfo-data'
+
+gem 'sprockets', '~> 3.7.2'
+
 gem 'ffi', '=1.12.2'
 # Use SCSS for stylesheets
 gem 'sass-rails', '>= 4.0.3'
